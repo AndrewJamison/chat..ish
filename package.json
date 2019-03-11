@@ -1,0 +1,10 @@
+{
+    "name": "andrew-chat-service",
+    "version": "0.0.1",
+    "description": "a simple web chat application",
+    "dependencies": {
+        "cookie-parser": "^1.4.4",
+        "express": "^4.16.4",
+        "socket.io": "^2.2.0"
+    }
+}

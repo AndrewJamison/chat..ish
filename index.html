@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial;}
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      ul {overflow: scroll}
+      #messages { list-style-type: none; margin: 0; margin-bottom: 30px; padding: 0; }
+      #messages li { padding: 5px 10px; width: 85% }
+      #messages li:nth-child(odd) { background: #eee; }
+      #users { position: fixed; top: 0; right: 0; width: 15%; height: 95%; background-color: lightgrey; z-index: 1;border: 1px solid black}
+      
+    </style>
+  </head>
+  <body>
+    <ul id="users">
+      <h1 style="color: white">Users</h1>
+    </ul>
+    <ul id="messages"></ul>
+    <form action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+        $(function () {
+            var socket = io();
+            $('form').submit(function(e){
+                e.preventDefault();
+                socket.emit('chat message', $('#m').val());
+                $('#m').val('');
+                return false;
+            });
+            socket.on('chat message', function(msg, t, usr){
+              let time = new Date(t);
+              $('#messages').append($('<li class=' + usr + '>').text(time.getHours() + ":" + time.getMinutes() + "    " + usr + " says:    " + msg));
+              window.scrollTo(0,document.body.scrollHeight);
+            });
+            socket.on('history', function(chatData){
+              for (let i = 0; i < chatData.length; i++) {
+                let time = new Date(chatData[i][1]);
+                $('#messages').append($('<li class=' + chatData[i][2] + '>').text(time.getHours() + ":" + time.getMinutes() + "    " +  chatData[i][2] + " says:    " + chatData[i][0]));
+              }
+            });
+            socket.on('color change', function(user, value){
+              alert('color change');
+              $('.'+user).css('color', '#'+value);
+            });
+            socket.on('cookie check', function(user){
+              if (document.cookie == '') {
+                document.cookie = "user:"+ user;
+              }
+              else {
+                let username = document.cookie;
+                username = username.split(':')[1];
+                socket.emit('namechange', username);
+              }
+            });
+            socket.on('change cookie', function(newName){
+              document.cookie = "user:"+ newName;
+            });
+            socket.on('user connected', function(username){
+              $('#users').append($('<li class=' + username + '>').text(username));
+            });
+            socket.on('user disconnected', function(username){
+              $('#users').find('.'+ username).remove()
+            })
+            socket.on('user history', function(users){
+              for (let i = 0; i < users.length; i++){
+                if ($('#users').find(("."+users[i]) == null)){
+                  $('#users').append($('<li class=' + users[i] + '>').text(users[i]));
+                }
+              }
+            });
+            socket.on('bold yourself', function(username){
+              $('.'+username).css('font-weight', 'bold');
+            });
+
+        });
+
+
+    </script>
+  </body>
+</html>
